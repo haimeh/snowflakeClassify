@@ -128,6 +128,10 @@ predict.MXFeedForwardModel_cust <- function (model, X, ctx = NULL, array.batch.s
 
 	names(namedShapes) <- model$symbol$arguments
 	fixed.shapes <- namedShapes[sapply(namedShapes,function(x)length(x)!=0)]
+	names(arg.shapes) <- names(model$arg.params)
+	#aux.shapes <- lapply(model$aux.params,dim)
+	#names(aux.shapes) <- names(model$aux.params)
+	fixed.shapes[names(arg.shapes)] <- arg.shapes
 	## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 	input.names <- names(dlist)

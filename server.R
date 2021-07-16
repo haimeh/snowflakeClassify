@@ -67,9 +67,14 @@ fileRename <- function(from, to) {
 }
 
 sortImagesByClass <- function(classifications, imgPaths, newRootDir){
+	newImgPaths <- imgPaths
+	i <- 0
 	for(imgPath in imgPaths){
-		fileRename(from = imgPath, to = file.path(newRootDir,class,basename(imgPath)))
+		i = i+1
+		newImgPaths[i] <- file.path(newRootDir,class,basename(imgPath)))
+		fileRename(from = imgPath, to = newImgPaths[i])
 	}
+	return(newImgPaths)
 }
 
 # --- Server Logic -----------------------------------------------------------------------------------------
@@ -136,6 +141,8 @@ function(input, output, session) {
 								  imgPaths=sessionQuery$pathData, 
 								  newRootDir=input$sortedDirectory)
 			}
+			browser()
+			sessionQuery$pathData <- file.path(sessionQuery$pathData)
 			rankTable$editCount <- rankTable$editCount+1
 		}
 	})
