@@ -14,7 +14,7 @@ source("snownet.R")
 
 #model <- mx.model.load("SWA_snowflakeTestTripRefine2",0000)
 #model <- mx.model.load("SWA_sf64TripRefine",0000)
-model <- mx.model.load("SWA_sf64TripRefineF",0000)
+model <- mx.model.load("SWA_sf64TripF",0000)
 
 myInternals = internals(model$symbol)
 anchor_symbol = myInternals[[match("anchor_output", outputs(myInternals))]]
@@ -137,12 +137,10 @@ function(input, output, session) {
 			#measurements <- do.call(rbind,sessionQuery$measurements)
 			if(input$moveClassifications){
 				#classifications, imgPaths, newRootDir
-				sortImagesByClass(classifications=classes, 
+				sessionQuery$pathData <- sortImagesByClass(classifications=classes, 
 								  imgPaths=sessionQuery$pathData, 
 								  newRootDir=input$sortedDirectory)
 			}
-			browser()
-			sessionQuery$pathData <- file.path(sessionQuery$pathData)
 			rankTable$editCount <- rankTable$editCount+1
 		}
 	})
