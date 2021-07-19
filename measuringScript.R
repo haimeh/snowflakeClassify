@@ -1,4 +1,5 @@
 library("imager")
+library("MASS")
 
 radiusInit <- function(shape){
 	index <- expand.grid(x=0:(shape[1]-1),y=0:(shape[2]-1))
@@ -66,8 +67,14 @@ getSnowflakeStats <- function(imgg,debug=F){
 	imgg <- (imgg-qu[1])/qu[2]
 	imgg[imgg>1] <- 1
 	imgg[imgg<0] <- 0
+
 	
 	estMask <- dilate_square((imgg<.15 | imgg>.95),5)
+	imgDF <- as.data.frame(imgg)
+	bgDF <- imgDF[as.logical(!estMask),]
+	linTrend <- lm.ridge(value ~ x+y, data=bgDF, lambda=1)
+	trendPred <- array(as.matrix(cbind(const=1,imgDF[,c("x","y")])) %*% coef(linTrend),dim(imgg))
+	imgg <- imgg-trendPred
 	
 	weightBg <- as.cimg(radiusInit(dim(imgg)[1:2])) * as.numeric(!estMask)
 	weightFg <- as.cimg(max(weightBg)-radiusInit(dim(imgg)[1:2])) * as.numeric(estMask)
