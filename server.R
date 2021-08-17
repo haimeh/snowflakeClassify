@@ -3,6 +3,7 @@ library("DT")
 library("imager")
 library("mxnet")
 library("e1071")
+library("MASS")
 source("crystalCropp.R")
 source("snownet.R")
 
@@ -14,12 +15,13 @@ source("snownet.R")
 
 #model <- mx.model.load("SWA_snowflakeTestTripRefine2",0000)
 #model <- mx.model.load("SWA_sf64TripRefine",0000)
-model <- mx.model.load("SWA_sf64TripF",0000)
+#model <- mx.model.load("SWA_sf64TripF",0000)
+model <- mx.model.load("harmonic64",0000)
 
 myInternals = internals(model$symbol)
 anchor_symbol = myInternals[[match("anchor_output", outputs(myInternals))]]
 
-nnModel <- list(symbol = anchor_symbol,
+nnModel <<- list(symbol = anchor_symbol,
 			arg.params = model$arg.params,
 			aux.params = model$aux.params)
 class(nnModel) <- "MXFeedForwardModel"
@@ -32,7 +34,7 @@ svmModels_reactive <- reactiveValues(svmModels=svmModels)
 
 
 
-options(browser="/usr/bin/firefox")
+#options(browser="/usr/bin/firefox")
 
 plotCrystalTrace <- function(crystal){
 	if(length(crystal)>0){
@@ -71,7 +73,7 @@ sortImagesByClass <- function(classifications, imgPaths, newRootDir){
 	i <- 0
 	for(imgPath in imgPaths){
 		i = i+1
-		newImgPaths[i] <- file.path(newRootDir,class,basename(imgPath)))
+		newImgPaths[i] <- file.path(newRootDir,class,basename(imgPath))
 		fileRename(from = imgPath, to = newImgPaths[i])
 	}
 	return(newImgPaths)
@@ -109,7 +111,7 @@ function(input, output, session) {
 	observeEvent(input$embedQuery,{
 		if(!is.null(input$queryDirectory)){
 			# generate embeddings 
-			dirNames <- unique(sapply(list.files(input$queryDirectory, recursive=T, full.names=T),function(x){dirname(dirname(x))}))
+			dirNames <- unique(sapply(list.files(input$queryDirectory, recursive=T, full.names=T,pattern="*.jpg$|*.JPG$|*.png$|*.PNG$"),function(x){(dirname(x))}))
 			for(subdir in dirNames){
 				print(subdir)
 				embeddedData <- embedSnowflakes(subdir)
