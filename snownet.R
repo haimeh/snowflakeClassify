@@ -126,11 +126,15 @@ predict.MXFeedForwardModel_cust <- function (model, X, ctx = NULL, array.batch.s
 				  as.integer(strsplit(gsub("\\(([^()]*)\\)|.", "\\1", x, perl=T),",")[[1]])
 	})
 
+	#browser()
 	names(namedShapes) <- model$symbol$arguments
 	fixed.shapes <- namedShapes[sapply(namedShapes,function(x)length(x)!=0)]
-	names(arg.shapes) <- names(model$arg.params)
+
 	#aux.shapes <- lapply(model$aux.params,dim)
 	#names(aux.shapes) <- names(model$aux.params)
+	arg.shapes <- lapply(model$arg.params,dim)
+	names(arg.shapes) <- names(model$arg.params)
+	
 	fixed.shapes[names(arg.shapes)] <- arg.shapes
 	## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -178,7 +182,8 @@ predict.MXFeedForwardModel_cust <- function (model, X, ctx = NULL, array.batch.s
 
 #sortedCropsToSVM <- function(baseDir){
 embedSnowflakes <- function(baseDir){
-	imgFolders <- list.files(baseDir,recursive=F, full.names=T)
+	#imgFolders <- baseDir#list.files(baseDir,recursive=F, full.names=T)
+  folder <- baseDir
 	embeddingsDF <- NULL
 	measurements <- list()
 	classVec <- NULL
@@ -187,15 +192,15 @@ embedSnowflakes <- function(baseDir){
 	#index <- !(mainImgName %in% cropedImgNames)
 	#index <- rep(1,length(list.files(baseDir,recursive=T,full.names=F)))
 	index <- 0
-	howmanyimgs <- length(list.files(baseDir,recursive=T,full.names=F))
+	howmanyimgs <- length(list.files(baseDir,recursive=F,full.names=F,pattern="*.jpg$|*.JPG$|*.png$|*.PNG$"))
 	withProgress(message = 'Embedding', value = 0,{
 		progressTicker <- 0
-	for(folder in imgFolders){
+	#for(folder in imgFolders){
 		imgVec75 <- NULL
 		imgVec175 <- NULL
 		imgVec275 <- NULL
 		print(folder)
-		imgNames <- list.files(folder,recursive=F, full.names=T)
+		imgNames <- list.files(folder,recursive=F, full.names=T,pattern="*.jpg$|*.JPG$|*.png$|*.PNG$")
 		for(imgName in imgNames){try({
 			print(imgName)
 			index <- index+1
@@ -222,25 +227,25 @@ embedSnowflakes <- function(baseDir){
 				measurements[[index]] <- measurement
 			}
 
-			edges = c(as.numeric(img[1,,,]),as.numeric(img[,1,,]),as.numeric(img[width(img),,,]),as.numeric(img[,height(img),,]))
-			newValues = rnorm(n=length(edges),mean=mean(edges),sd=sd(edges)*.25)
-			img[1,,,] <- sample(newValues,height(img))
-			img[width(img),,,] <- sample(newValues,height(img))
-			img[,1,,] <- sample(newValues,width(img))
-			img[,height(img),,] <- sample(newValues,width(img))
+			#edges = c(as.numeric(img[1,,,]),as.numeric(img[,1,,]),as.numeric(img[width(img),,,]),as.numeric(img[,height(img),,]))
+			#newValues = rnorm(n=length(edges),mean=mean(edges),sd=sd(edges)*.25)
+			#img[1,,,] <- sample(newValues,height(img))
+			#img[width(img),,,] <- sample(newValues,height(img))
+			#img[,1,,] <- sample(newValues,width(img))
+			#img[,height(img),,] <- sample(newValues,width(img))
 			halfImg <- img
 	
 			if(max(dim(img))<=75){
 				resizedImg <- as.numeric(resize(halfImg, size_x=75, size_y=75, 
-												interpolation_type=0,boundary_conditions=1, centering_x=.5,centering_y=.5))
+												interpolation_type=0,boundary_conditions=3, centering_x=.5,centering_y=.5))
 				imgVec75 <- cbind(imgVec75, resizedImg)
 			}else if(max(dim(img))<=175){
 				resizedImg <- as.numeric(resize(halfImg, size_x=175, size_y=175, 
-												interpolation_type=0,boundary_conditions=1, centering_x=.5,centering_y=.5))
+												interpolation_type=0,boundary_conditions=3, centering_x=.5,centering_y=.5))
 				imgVec175 <- cbind(imgVec175, resizedImg)
 			}else{
 				resizedImg <- as.numeric(resize(halfImg, size_x=275, size_y=275, 
-												interpolation_type=0,boundary_conditions=1, centering_x=.5,centering_y=.5))
+												interpolation_type=0,boundary_conditions=3, centering_x=.5,centering_y=.5))
 				imgVec275 <- cbind(imgVec275, resizedImg)
 			}
 		})}
@@ -250,7 +255,7 @@ embedSnowflakes <- function(baseDir){
 			netEmbedding <- t(predict.MXFeedForwardModel_cust(nnModel,
 														dataIter,
 														array.layout = "colmajor",
-														ctx= mx.gpu(),
+														ctx= mx.cpu(),
 														allow.extra.params=T))
 			embeddingsDF <- rbind(embeddingsDF,netEmbedding)
 			rm(dataIter)
@@ -261,7 +266,7 @@ embedSnowflakes <- function(baseDir){
 			netEmbedding <- t(predict.MXFeedForwardModel_cust(nnModel,
 														dataIter,
 														array.layout = "colmajor",
-														ctx= mx.gpu(),
+														ctx= mx.cpu(),
 														allow.extra.params=T))
 			embeddingsDF <- rbind(embeddingsDF,netEmbedding)
 			rm(dataIter)
@@ -272,15 +277,15 @@ embedSnowflakes <- function(baseDir){
 			netEmbedding <- t(predict.MXFeedForwardModel_cust(nnModel,
 														dataIter,
 														array.layout = "colmajor",
-														ctx= mx.gpu(),
+														ctx= mx.cpu(),
 														allow.extra.params=T))
 			embeddingsDF <- rbind(embeddingsDF,netEmbedding)
 			rm(dataIter)
 			gc()
 		}
 		#incProgress(1/sum(index), detail = paste(basename(imgName)," -- ",progressTicker,"of",sum(index)))
-		incProgress(length(imgNames), detail = paste(basename(imgName)," -- ",progressTicker,"of",howmanyimgs))
-	}
+		incProgress(1, detail = paste(basename(imgName)," -- ",progressTicker,"of",howmanyimgs))
+	#}
 	})
 
 	return(list(pathData=imgLocation, classData=classVec, hashData=embeddingsDF, measurements = do.call(rbind, measurements)))
