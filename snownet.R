@@ -52,7 +52,6 @@ snowIter <- setRefClass("snowIter",
 
 
 
-
 mx.simple.bind <- function(symbol, ctx, dtype ,grad.req = "null", fixed.param = NULL, slist, ...) {
 		if (!mxnet:::is.MXSymbol(symbol)) stop("symbol need to be MXSymbol")
 	
@@ -129,8 +128,8 @@ predict.MXFeedForwardModel_cust <- function (model, X, ctx = NULL, array.batch.s
 	#browser()
 	names(namedShapes) <- model$symbol$arguments
 	fixed.shapes <- namedShapes[sapply(namedShapes,function(x)length(x)!=0)]
-
-	#aux.shapes <- lapply(model$aux.params,dim)
+	
+    #aux.shapes <- lapply(model$aux.params,dim)
 	#names(aux.shapes) <- names(model$aux.params)
 	arg.shapes <- lapply(model$arg.params,dim)
 	names(arg.shapes) <- names(model$arg.params)
@@ -175,8 +174,6 @@ predict.MXFeedForwardModel_cust <- function (model, X, ctx = NULL, array.batch.s
 	X$reset()
 	return(packer$get())
 }
-
-
 
 
 

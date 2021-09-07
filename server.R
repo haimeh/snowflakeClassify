@@ -7,6 +7,8 @@ library("MASS")
 source("crystalCropp.R")
 source("snownet.R")
 
+options(browser="/usr/bin/firefox")
+
 #appScripts <- system.file("shiny_app", package="crystalCrystaldR")
 #sapply(list.files(path=appScripts,pattern="*_serverside.R",full.names = T),source,.GlobalEnv)
 
@@ -17,6 +19,12 @@ source("snownet.R")
 #model <- mx.model.load("SWA_sf64TripRefine",0000)
 #model <- mx.model.load("SWA_sf64TripF",0000)
 model <- mx.model.load("harmonic64",0000)
+embeddingMean <- c(
+-1.78670534,   1.61472011,  -1.30197684, -10.19537330,  -2.37761307,
+ 1.87344104,  -2.21611227,  -2.67849631,  -0.59680935,  -1.48055685,
+-1.47556361,  -2.92614473,  -1.67263501,   5.53355529,   1.73912589,
+ 0.08333041
+)
 
 myInternals = internals(model$symbol)
 anchor_symbol = myInternals[[match("anchor_output", outputs(myInternals))]]
@@ -25,7 +33,7 @@ nnModel <<- list(symbol = anchor_symbol,
 			arg.params = model$arg.params,
 			aux.params = model$aux.params)
 class(nnModel) <- "MXFeedForwardModel"
-#mx.model.save(nnModel,"SWA_sf64TripRefineF",0000)
+nnModel <<- nnModel
 
 load("svmModels.Rdata")
 svmModels_reactive <- reactiveValues(svmModels=svmModels)
@@ -73,7 +81,7 @@ sortImagesByClass <- function(classifications, imgPaths, newRootDir){
 	i <- 0
 	for(imgPath in imgPaths){
 		i = i+1
-		newImgPaths[i] <- file.path(newRootDir,class,basename(imgPath))
+		newImgPaths[i] <- file.path(newRootDir,classifications,basename(imgPath))
 		fileRename(from = imgPath, to = newImgPaths[i])
 	}
 	return(newImgPaths)
@@ -129,7 +137,6 @@ function(input, output, session) {
 
 	output$selectedSVM_UI <- renderUI({ selectInput("selectedSVM", "Select SVM model:", choices = names(svmModels_reactive$svmModels)) })
 
-		#TODO:	this needs to be changed from a list of dataframes to dataframe
 	observeEvent(input$classify,{
 		if(!is.null(sessionQuery$hashData)){
 			predictionData <- predictClasses(svmModels[[input$selectedSVM]], sessionQuery$hashData)
@@ -139,7 +146,8 @@ function(input, output, session) {
 			#measurements <- do.call(rbind,sessionQuery$measurements)
 			if(input$moveClassifications){
 				#classifications, imgPaths, newRootDir
-				sessionQuery$pathData <- sortImagesByClass(classifications=classes, 
+				#BUG: fix the source of classesPathdata
+				sessionQuery$pathData <- sortImagesByClass(classifications=predictionData[["top3"]][,1], 
 								  imgPaths=sessionQuery$pathData, 
 								  newRootDir=input$sortedDirectory)
 			}
@@ -152,7 +160,6 @@ function(input, output, session) {
 			svmModels_reactive$svmModels[[input$selectedSVM]] <- NULL
 			print(paste("delete",input$selectedSVM))
 			print(paste("models",names(svmModels_reactive$svmModels)))
-			#NOTE: save svm
 			save(svmModels_reactive$svmModels,file="svmModels.Rdata")
 		}
 	})
@@ -167,8 +174,8 @@ function(input, output, session) {
 	# ----
 	observeEvent(input$trainSvm,{
 		if(!is.null(sessionQuery$hashData)){
-			svmModels_reactive$svmModels[[input$svmName]] <- generateNewSVM(classVec=sessionQuery$classVec, embeddingsDF=sessionQuery$hashData)
-			#NOTE: save svm
+				browser()
+			svmModels_reactive$svmModels[[input$svmName]] <- generateNewSVM(classVec=sessionQuery$classData, embeddingsDF=sessionQuery$hashData)
 			save(svmModels_reactive$svmModels,file="svmModels.Rdata")
 		}
 	})
@@ -254,7 +261,7 @@ function(input, output, session) {
 		if((length(sessionQuery$hashData))>1){
 			#sessionStorage$permutation <- NULL
 			
-			hashData <- sessionQuery$hashData
+			hashData <- sessionQuery$hashData-embeddingMean
 			
 			#dist_mat <- dist(hashData, method = 'euclidean')
 			#hclust_avg <- hclust(dist_mat, method = 'ward.D')
