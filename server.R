@@ -7,7 +7,7 @@ library("MASS")
 source("crystalCropp.R")
 source("snownet.R")
 
-options(browser="/usr/bin/firefox")
+#options(browser="/usr/bin/firefox")
 
 #appScripts <- system.file("shiny_app", package="crystalCrystaldR")
 #sapply(list.files(path=appScripts,pattern="*_serverside.R",full.names = T),source,.GlobalEnv)
