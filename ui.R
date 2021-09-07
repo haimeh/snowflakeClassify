@@ -20,7 +20,7 @@ fluidPage(
 			#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			# all images in directory
 			conditionalPanel(
-				condition = "input.inputType !== 'Classify'",
+				condition = "input.inputType !== 'Classify' && input.inputType !== 'Train'",
 				textInput(
 					inputId = "queryDirectory",
 					label = "Source Directory"
@@ -96,7 +96,7 @@ fluidPage(
 					label = "Train New SVM"
 				),
 				h1(" "),
-				paste0("Train a new SVM classifier based on the directory structure inside the source directory.")
+				paste0("Train a new SVM classifier based on the directory structure inside the embeddings from source directory.")
 			),
 			conditionalPanel(
 				condition = "input.inputType == 'Embed'",
