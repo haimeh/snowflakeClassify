@@ -36,7 +36,7 @@ class(nnModel) <- "MXFeedForwardModel"
 nnModel <<- nnModel
 
 load("svmModels.Rdata")
-svmModels_reactive <- reactiveValues(svmModels=svmModels)
+svmModels_reactive <<- reactiveValues(svmModels=svmModels)
 
 
 
@@ -81,7 +81,7 @@ sortImagesByClass <- function(classifications, imgPaths, newRootDir){
 	i <- 0
 	for(imgPath in imgPaths){
 		i = i+1
-		newImgPaths[i] <- file.path(newRootDir,classifications,basename(imgPath))
+		newImgPaths[i] <- file.path(newRootDir,classifications[[i]],basename(imgPath))
 		fileRename(from = imgPath, to = newImgPaths[i])
 	}
 	return(newImgPaths)
@@ -118,9 +118,14 @@ function(input, output, session) {
 	# --- get data into r 
 	observeEvent(input$embedQuery,{
 		if(!is.null(input$queryDirectory)){
+		  
 			# generate embeddings 
 			dirNames <- unique(sapply(list.files(input$queryDirectory, recursive=T, full.names=T,pattern="*.jpg$|*.JPG$|*.png$|*.PNG$"),function(x){(dirname(x))}))
+			howmanyDir <- length(dirNames)
+			progressTicker <- 0
+			withProgress({
 			for(subdir in dirNames){
+			  progressTicker <- progressTicker+1
 				print(subdir)
 				embeddedData <- embedSnowflakes(subdir)
 				sessionQuery$hashData <- rbind(sessionQuery$hashData, embeddedData$hashData)
@@ -130,7 +135,10 @@ function(input, output, session) {
 
 				rankTable$editCount <- rankTable$editCount+1
 				print("finished subdir")
+				incProgress(1/howmanyDir, detail = paste(basename(subdir)," -- ",progressTicker,"of",howmanyDir))
+				
 			}
+			})
 			print("finished all embed")
 		}
 	})
@@ -144,7 +152,7 @@ function(input, output, session) {
 			rankTable$Distance <- classes #rbind(classes,rankTable$Distance)
 			rankTable$Probabilities <- predictionData$Probabilities
 			#measurements <- do.call(rbind,sessionQuery$measurements)
-			if(input$moveClassifications){
+			if(input$moveClassifications & input$sortedDirectory != ""){
 				#classifications, imgPaths, newRootDir
 				#BUG: fix the source of classesPathdata
 				sessionQuery$pathData <- sortImagesByClass(classifications=predictionData[["top3"]][,1], 
@@ -160,7 +168,20 @@ function(input, output, session) {
 			svmModels_reactive$svmModels[[input$selectedSVM]] <- NULL
 			print(paste("delete",input$selectedSVM))
 			print(paste("models",names(svmModels_reactive$svmModels)))
-			save(svmModels_reactive$svmModels,file="svmModels.Rdata")
+			svmModels <- svmModels_reactive$svmModels
+			showModal(modalDialog(
+			  title = "Saving Changes",
+			  'This may take a couple minutes',
+			  size = "s",
+			  easyClose = TRUE
+			))
+			save(svmModels,file="svmModels.Rdata")
+			showModal(modalDialog(
+			  title = "Saving Changes",
+			  'Done',
+			  size = "s",
+			  easyClose = TRUE
+			))
 		}
 	})
 	observeEvent(input$clearEmbed,{
@@ -174,9 +195,25 @@ function(input, output, session) {
 	# ----
 	observeEvent(input$trainSvm,{
 		if(!is.null(sessionQuery$hashData)){
-				browser()
+		  showModal(modalDialog(
+		    title = "SVM",
+		    'Generating and Saving new SVM. This may take a couple minutes',
+		    size = "s",
+		    easyClose = TRUE
+		  ))
 			svmModels_reactive$svmModels[[input$svmName]] <- generateNewSVM(classVec=sessionQuery$classData, embeddingsDF=sessionQuery$hashData)
-			save(svmModels_reactive$svmModels,file="svmModels.Rdata")
+			svmModels <- svmModels_reactive$svmModels
+			print(paste("models",names(svmModels_reactive$svmModels)))
+			
+
+			save(svmModels,file="svmModels.Rdata")
+			showModal(modalDialog(
+			  title = "Saving Changes",
+			  'Done',
+			  size = "s",
+			  easyClose = TRUE
+			))
+			
 		}
 	})
 	

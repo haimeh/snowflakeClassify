@@ -189,15 +189,16 @@ embedSnowflakes <- function(baseDir){
 	#index <- !(mainImgName %in% cropedImgNames)
 	#index <- rep(1,length(list.files(baseDir,recursive=T,full.names=F)))
 	index <- 0
-	howmanyimgs <- length(list.files(baseDir,recursive=F,full.names=F,pattern="*.jpg$|*.JPG$|*.png$|*.PNG$"))
-	withProgress(message = 'Embedding', value = 0,{
-		progressTicker <- 0
+	#howmanyimgs <- length(list.files(baseDir,recursive=F,full.names=F,pattern="*.jpg$|*.JPG$|*.png$|*.PNG$"))
+
 	#for(folder in imgFolders){
-		imgVec75 <- NULL
-		imgVec175 <- NULL
-		imgVec275 <- NULL
-		print(folder)
+	imgVec75 <- NULL
+	imgVec175 <- NULL
+	imgVec275 <- NULL
+	print(folder)
+	#withProgress({
 		imgNames <- list.files(folder,recursive=F, full.names=T,pattern="*.jpg$|*.JPG$|*.png$|*.PNG$")
+		howmanyimgs <- length(imgNames)
 		for(imgName in imgNames){try({
 			print(imgName)
 			index <- index+1
@@ -280,10 +281,8 @@ embedSnowflakes <- function(baseDir){
 			rm(dataIter)
 			gc()
 		}
-		#incProgress(1/sum(index), detail = paste(basename(imgName)," -- ",progressTicker,"of",sum(index)))
-		incProgress(1, detail = paste(basename(imgName)," -- ",progressTicker,"of",howmanyimgs))
-	#}
-	})
+		#incProgress(1/howmanyimgs, detail = paste(basename(imgName)," -- ",index,"of",howmanyimgs))
+	#})
 
 	return(list(pathData=imgLocation, classData=classVec, hashData=embeddingsDF, measurements = do.call(rbind, measurements)))
 
