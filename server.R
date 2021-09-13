@@ -18,13 +18,22 @@ source("snownet.R")
 #model <- mx.model.load("SWA_snowflakeTestTripRefine2",0000)
 #model <- mx.model.load("SWA_sf64TripRefine",0000)
 #model <- mx.model.load("SWA_sf64TripF",0000)
-model <- mx.model.load("harmonic64",0000)
+#model <- mx.model.load("harmonic64",0000)
+model <- mx.model.load("nonHam96",40000)
+
+#embeddingMean <- c(
+#-1.78670534,   1.61472011,  -1.30197684, -10.19537330,  -2.37761307,
+# 1.87344104,  -2.21611227,  -2.67849631,  -0.59680935,  -1.48055685,
+#-1.47556361,  -2.92614473,  -1.67263501,   5.53355529,   1.73912589,
+# 0.08333041
+#)
 embeddingMean <- c(
--1.78670534,   1.61472011,  -1.30197684, -10.19537330,  -2.37761307,
- 1.87344104,  -2.21611227,  -2.67849631,  -0.59680935,  -1.48055685,
--1.47556361,  -2.92614473,  -1.67263501,   5.53355529,   1.73912589,
- 0.08333041
+ 0.10099696, -0.01059609, -1.79351423,  1.29355131,  3.35415246, -2.20803565, 
+-0.23136721, -1.72676612, -5.15309765, -0.53839703, -1.56733400, -2.59122399, 
+-2.93722193,  0.47426411,  2.43214155, -3.91865052
 )
+
+#embeddingMean <- rep(0,16)
 
 myInternals = internals(model$symbol)
 anchor_symbol = myInternals[[match("anchor_output", outputs(myInternals))]]
@@ -63,10 +72,12 @@ predictClasses <- function(svmModel,embeddingsDF){
 }
 
 generateNewSVM <- function(classVec, embeddingsDF){
-	counts <- table(classVec)
-	classWeights <- counts/sum(counts)
+	#counts <- table(classVec)
+	#classWeights <- counts/sum(counts)
+	counts <- log(table(classVec))
+	classWeights <- sum(counts) / (length(counts) * counts)
 	svmModel <- svm( as.factor(classVec)~., data=embeddingsDF , type="C-classification",  kernel = "polynomial", 
-					 degree=2, cost = 100, scale = FALSE, class.weights=classWeights, inverse=T, probability=T)
+					 degree=4, cost = 10, scale = FALSE, class.weights=classWeights, inverse=T, probability=T)
 	return(svmModel)
 }
 
