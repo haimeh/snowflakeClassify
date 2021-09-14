@@ -74,8 +74,11 @@ predictClasses <- function(svmModel,embeddingsDF){
 generateNewSVM <- function(classVec, embeddingsDF){
 	#counts <- table(classVec)
 	#classWeights <- counts/sum(counts)
-	counts <- log(table(classVec))
+
+	counts <- log(table(classVec)+1)
 	classWeights <- sum(counts) / (length(counts) * counts)
+	classWeights[is.na(classWeights)|is.nan(classWeights)|is.infinite(classWeights)] <- 1
+	
 	svmModel <- svm( as.factor(classVec)~., data=embeddingsDF , type="C-classification",  kernel = "polynomial", 
 					 degree=4, cost = 10, scale = FALSE, class.weights=classWeights, inverse=T, probability=T)
 	return(svmModel)
