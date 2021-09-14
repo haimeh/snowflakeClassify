@@ -45,7 +45,7 @@ class(nnModel) <- "MXFeedForwardModel"
 nnModel <<- nnModel
 
 load("svmModels.Rdata")
-svmModels_reactive <<- reactiveValues(svmModels=svmModels)
+svmModels_reactive <- reactiveValues(svmModels=svmModels)
 
 
 
@@ -158,7 +158,7 @@ function(input, output, session) {
 
 	observeEvent(input$classify,{
 		if(!is.null(sessionQuery$hashData)){
-			predictionData <- predictClasses(svmModels[[input$selectedSVM]], sessionQuery$hashData)
+			predictionData <- predictClasses(svmModels_reactive$svmModels[[input$selectedSVM]], sessionQuery$hashData)
 			classes <- cbind(basename(sessionQuery$pathData),predictionData[["top3"]], sessionQuery$measurements)
 			rankTable$Distance <- classes #rbind(classes,rankTable$Distance)
 			rankTable$Probabilities <- predictionData$Probabilities
@@ -182,7 +182,7 @@ function(input, output, session) {
 			svmModels <- svmModels_reactive$svmModels
 			showModal(modalDialog(
 			  title = "Saving Changes",
-			  'This may take a couple minutes',
+			  'This may take a minute',
 			  size = "s",
 			  easyClose = TRUE
 			))
@@ -208,7 +208,7 @@ function(input, output, session) {
 		if(!is.null(sessionQuery$hashData)){
 		  showModal(modalDialog(
 		    title = "SVM",
-		    'Generating and Saving new SVM. This may take a couple minutes',
+		    'Generating and Saving new SVM. This may take a couple minutes. Press Dismiss to Continue and wait for app to say Done',
 		    size = "s",
 		    easyClose = TRUE
 		  ))
